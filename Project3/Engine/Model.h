@@ -25,9 +25,9 @@ namespace Engine
 			};
 
 			struct UniformBufferObject {
-				glm::mat4 model;
-				glm::mat4 view;
-				glm::mat4 proj;
+				alignas(16) glm::mat4 model;
+				alignas(16) glm::mat4 view;
+				alignas(16) glm::mat4 proj;
 			};
 			
 			Model(Device& dev, const std::vector<Vertex>& vertices, const std::vector<uint16_t>& indices);
@@ -46,8 +46,8 @@ namespace Engine
 			void BindIndex(VkCommandBuffer CommandBuffer) { vkCmdBindIndexBuffer(CommandBuffer, IndexBuffer, 0, VK_INDEX_TYPE_UINT16); }
 			void Draw(VkCommandBuffer CommandBuffers) { vkCmdDrawIndexed(CommandBuffers, IndexCounts, 1, 0, 0, 0); }
 
-			void updateUniformBuffer(uint32_t currentImage, VkExtent2D Extent);
-			VkBuffer GetUniformBuffer(uint32_t currentFrame) { return uniformBuffer[currentFrame]; }
+			void updateUniformBuffer(size_t currentImage, VkExtent2D Extent);
+			VkBuffer GetUniformBuffer(size_t currentFrame) { return uniformBuffer[currentFrame]; }
 
 		private:
 			void createVertexBuffer(const std::vector<Vertex>& vertices);
