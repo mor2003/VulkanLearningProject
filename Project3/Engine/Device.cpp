@@ -165,6 +165,7 @@ namespace Engine {
 			}
 		}
 
+		std::cout << "device size" << devices.size() << std::endl;
 		if (PhysicalDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("failed to find a suitable device");
 		}
@@ -184,7 +185,24 @@ namespace Engine {
 			swapChainAdequate = !swapchainSupport.Formats.empty() && !swapchainSupport.presentModes.empty();
 		}
 
-		return indices.isComplete() && ExtensionsSupport;
+		/*
+		In Case you want to use a specific device in your pc (Can be used for easy development) 
+			- Pay attention that if you give wrong character the App won't be able to find the device
+			  and will return an error in Lines: 168 - 172
+
+			- if empty it will choose by default
+		*/
+		const char* YourDevice = "";
+
+		VkPhysicalDeviceProperties devicePropery;
+		vkGetPhysicalDeviceProperties(device, &devicePropery);
+		std::string CurrentDeviceName = devicePropery.deviceName;
+		bool RightDevice = false;
+		if (CurrentDeviceName.find(YourDevice) != std::string::npos) {
+			RightDevice = true;
+		}
+
+		return indices.isComplete() && ExtensionsSupport && swapChainAdequate && RightDevice;
 	}
 
 	QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) {
