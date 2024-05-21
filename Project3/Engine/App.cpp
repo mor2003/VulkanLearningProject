@@ -4,7 +4,7 @@ namespace Engine
 {
 	App::App() {
 		LoadModel();
-		createDesciptorLayout();
+		createDescriptorSetLayout();
 		createDescriptorSets();
 		createPipelineLayout();
 		recreateSwapchain();
@@ -116,7 +116,7 @@ namespace Engine
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 		recordCommandBuffer(commandBuffers[currentFrame], ImageIndex);
 		
-		model->updateUniformBuffer(static_cast<size_t>(currentFrame), swapchain->Extent());
+		model->updateUniformBuffer(currentFrame, swapchain->Extent());
 		result = swapchain->SubmitCommandBuffer(commandBuffers[currentFrame], &ImageIndex);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.ResizedFlag()) {
 			window.ResetResizedFlag();
@@ -206,18 +206,18 @@ namespace Engine
 		}
 	}
 
-	void App::createDesciptorLayout() {
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorCount = 1;
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
+	void App::createDescriptorSetLayout() {
+		VkDescriptorSetLayoutBinding bindingInfo{};
+		bindingInfo.binding = 0;
+		bindingInfo.descriptorCount = 1;
+		bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		bindingInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		bindingInfo.pImmutableSamplers = nullptr;
 
 		VkDescriptorSetLayoutCreateInfo LayoutInfo{};
 		LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		LayoutInfo.bindingCount = 1;
-		LayoutInfo.pBindings = &uboLayoutBinding;
+		LayoutInfo.pBindings = &bindingInfo;
 		
 		if (vkCreateDescriptorSetLayout(device.device(), &LayoutInfo, nullptr, &DescriptorSetLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout");
@@ -226,19 +226,18 @@ namespace Engine
 
 	void App::createDescriptorSets() {
 		std::vector<VkDescriptorSetLayout> layouts(MAX_FRAME_IN_FLIGHT, DescriptorSetLayout);
-		VkDescriptorSetAllocateInfo AllocInfo{};
-		AllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		AllocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
-		AllocInfo.descriptorPool = device.DescriptorPool();
-		AllocInfo.pSetLayouts = layouts.data();
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
+		allocInfo.pSetLayouts = layouts.data();
+		allocInfo.descriptorPool = device.DescriptorPool();
 
 		DescriptorSets.resize(MAX_FRAME_IN_FLIGHT);
-		if (vkAllocateDescriptorSets(device.device(), &AllocInfo, DescriptorSets.data()) != VK_SUCCESS) {
+		if (vkAllocateDescriptorSets(device.device(), &allocInfo, DescriptorSets.data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate descriptor sets");
 		}
 
 		for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
-
 			VkDescriptorBufferInfo bufferInfo{};
 			bufferInfo.buffer = model->GetUniformBuffer(i);
 			bufferInfo.offset = 0;
@@ -256,9 +255,8 @@ namespace Engine
 			WriteSet.pBufferInfo = &bufferInfo;
 			WriteSet.pImageInfo = nullptr;
 			WriteSet.pTexelBufferView = nullptr;
-			
-			vkUpdateDescriptorSets(device.device(), 1, &WriteSet, 0, nullptr);
 
+			vkUpdateDescriptorSets(device.device(), 1, &WriteSet, 0, nullptr);
 		}
 	}
 }

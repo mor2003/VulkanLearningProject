@@ -365,8 +365,8 @@ namespace Engine {
 
 	void Device::createDescriptorPool() {
 		VkDescriptorPoolSize PoolSize{};
-		PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		PoolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
+		PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
 		VkDescriptorPoolCreateInfo PoolInfo{};
 		PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -375,7 +375,8 @@ namespace Engine {
 		PoolInfo.maxSets = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
 
 		if (vkCreateDescriptorPool(_device, &PoolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create Descriptor pool");
+			throw std::runtime_error("failed to create descriptor pool");
 		}
+
 	}
 }

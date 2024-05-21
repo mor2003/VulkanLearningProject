@@ -38,8 +38,8 @@ namespace Engine {
 
 	Model::~Model() {
 		for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
-			vkDestroyBuffer(device.device(), uniformBuffer[i], nullptr);
-			vkFreeMemory(device.device(), uniformBufferMemory[i], nullptr);
+			vkDestroyBuffer(device.device(), UniformBuffers[i], nullptr);
+			vkFreeMemory(device.device(), UniformBuffersMemory[i], nullptr);
 		}
 
 		vkDestroyBuffer(device.device(), IndexBuffer, nullptr);
@@ -162,35 +162,36 @@ namespace Engine {
 	void Model::createUniformBuffers() {
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-		uniformBuffer.resize(MAX_FRAME_IN_FLIGHT);
-		uniformBufferMemory.resize(MAX_FRAME_IN_FLIGHT);
-		uniformBufferMapped.resize(MAX_FRAME_IN_FLIGHT);
+		UniformBuffers.resize(MAX_FRAME_IN_FLIGHT);
+		UniformBuffersMemory.resize(MAX_FRAME_IN_FLIGHT);
+		UniformBuffersMapped.resize(MAX_FRAME_IN_FLIGHT);
 
 		for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
 			device.createBuffer(
-				uniformBuffer[i],
+				UniformBuffers[i],
 				bufferSize,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				uniformBufferMemory[i]
-				);
+				UniformBuffersMemory[i]
+			);
 
-			vkMapMemory(device.device(), uniformBufferMemory[i], 0, bufferSize, 0, &uniformBufferMapped[i]);
+			vkMapMemory(device.device(), UniformBuffersMemory[i], 0, bufferSize, 0, &UniformBuffersMapped[i]);
 		}
 	}
 
-	void Model::updateUniformBuffer(uint32_t currentImage, VkExtent2D Extent) {
-		static auto startTime = std::chrono::high_resolution_clock::now();
+	void Model::updateUniformBuffer(uint32_t currentFrame, VkExtent2D Extnet) {
+		static auto StartTime = std::chrono::high_resolution_clock::now();
 
 		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - StartTime).count();
 
 		UniformBufferObject ubo{};
 		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(Extent.width) / static_cast<float>(Extent.height), 0.1f, 10.0f);
+		ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(Extnet.width) / static_cast<float>(Extnet.height), 0.1f, 10.f);
 
 		ubo.proj[1][1] *= -1;
-		memcpy(uniformBufferMapped[currentImage], &ubo, sizeof(ubo));
+
+		memcpy(UniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
 	}
 }

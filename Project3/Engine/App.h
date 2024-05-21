@@ -37,14 +37,15 @@ namespace Engine
 		// Renderering Subsystems
 		void LoadModel();
 		void createGraphicsPipeline();
-		void createDesciptorLayout();
+		void createDescriptorSetLayout();
 		void createDescriptorSets();
 
 		void createPipelineLayout();
 
-		VkPipelineLayout PipelineLayout;
 		VkDescriptorSetLayout DescriptorSetLayout;
 		std::vector<VkDescriptorSet> DescriptorSets;
+
+		VkPipelineLayout PipelineLayout;
 
 		Window window{ width, height };
 		Device device{window};

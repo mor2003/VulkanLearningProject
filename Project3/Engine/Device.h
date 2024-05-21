@@ -59,8 +59,8 @@ namespace Engine
 			VkDevice device() { return _device; }
 			VkSurfaceKHR surface() { return _surface; }
 
-			VkCommandPool CommandPool() { return _commandPool; }
 			VkDescriptorPool DescriptorPool() { return _descriptorPool; }
+			VkCommandPool CommandPool() { return _commandPool; }
 
 			VkQueue GraphicsQueue() { return _GraphicsQueue; }
 			VkQueue PresentQueue() { return _PresentQueue; }
@@ -108,8 +108,8 @@ namespace Engine
 			VkPhysicalDeviceProperties deviceProperites;
 			VkDevice _device;
 
-			VkCommandPool _commandPool;
 			VkDescriptorPool _descriptorPool;
+			VkCommandPool _commandPool;
 
 			//Queues
 			VkQueue _GraphicsQueue;

@@ -46,8 +46,8 @@ namespace Engine
 			void BindIndex(VkCommandBuffer CommandBuffer) { vkCmdBindIndexBuffer(CommandBuffer, IndexBuffer, 0, VK_INDEX_TYPE_UINT16); }
 			void Draw(VkCommandBuffer CommandBuffers) { vkCmdDrawIndexed(CommandBuffers, IndexCounts, 1, 0, 0, 0); }
 
-			void updateUniformBuffer(uint32_t currentImage, VkExtent2D Extent);
-			VkBuffer GetUniformBuffer(uint32_t currentFrame) { return uniformBuffer[currentFrame]; }
+			void updateUniformBuffer(uint32_t currentFrame, VkExtent2D Extent);
+			VkBuffer GetUniformBuffer(uint32_t currentFrame) { return UniformBuffers[currentFrame]; }
 
 		private:
 			void createVertexBuffer(const std::vector<Vertex>& vertices);
@@ -61,10 +61,9 @@ namespace Engine
 			VkBuffer IndexBuffer;
 			VkDeviceMemory IndexBufferMemory;
 
-			std::vector<VkBuffer> uniformBuffer;
-			std::vector<VkDeviceMemory> uniformBufferMemory;
-			std::vector<void*> uniformBufferMapped;
-			std::vector<VkDescriptorSet> DescriptorSets;
+			std::vector<VkBuffer> UniformBuffers;
+			std::vector<VkDeviceMemory> UniformBuffersMemory;
+			std::vector<void*> UniformBuffersMapped;
 
 			Device& device;
 
