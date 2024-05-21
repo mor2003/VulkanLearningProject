@@ -94,7 +94,7 @@ namespace Engine
 				const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 				void* pUserData
 			);
-			bool SuitableDevice(VkPhysicalDevice device);
+			bool SuitableDevice(VkPhysicalDevice device, uint32_t devicesCount);
 			QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
 			VkResult CreateDebugUtilsMessengerEXT(VkInstance Instance, const VkDebugUtilsMessengerCreateInfoEXT* pDebugInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);

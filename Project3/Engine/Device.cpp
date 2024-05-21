@@ -160,12 +160,11 @@ namespace Engine {
 		vkEnumeratePhysicalDevices(Instance, &devicesCount, devices.data());
 
 		for (const auto& device : devices) {
-			if (SuitableDevice(device)) {
+			if (SuitableDevice(device, devicesCount)) {
 				PhysicalDevice = device;
 			}
 		}
 
-		std::cout << "device size" << devices.size() << std::endl;
 		if (PhysicalDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("failed to find a suitable device");
 		}
@@ -174,7 +173,9 @@ namespace Engine {
 		std::cout << "Using GPU: " << deviceProperites.deviceName << std::endl;
 	}
 
-	bool Device::SuitableDevice(VkPhysicalDevice device) {
+	bool Device::SuitableDevice(VkPhysicalDevice device, uint32_t devicesCounts) {
+		static uint32_t currentCount = 0;
+
 		QueueFamilyIndices indices = findQueueFamilies(device);
 
 		bool ExtensionsSupport = checkForDeviceExtensions(device);
@@ -200,6 +201,13 @@ namespace Engine {
 		bool RightDevice = false;
 		if (CurrentDeviceName.find(YourDevice) != std::string::npos) {
 			RightDevice = true;
+		}
+		else {
+			currentCount++;
+		}
+
+		if (currentCount == devicesCounts) {
+			std::cerr << "Error: Device name is inavlid or cannot be found" << std::endl;
 		}
 
 		return indices.isComplete() && ExtensionsSupport && swapChainAdequate && RightDevice;
