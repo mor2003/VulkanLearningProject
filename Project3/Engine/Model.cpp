@@ -179,8 +179,8 @@ namespace Engine {
 		}
 	}
 
-	void Model::updateUniformBuffer(uint32_t currentFrame, VkExtent2D Extnet) {
-		static auto StartTime = std::chrono::high_resolution_clock::now();
+	void Model::updateUniformBuffer(size_t currentImage, VkExtent2D Extent) {
+		static auto startTime = std::chrono::high_resolution_clock::now();
 
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - StartTime).count();
@@ -189,6 +189,7 @@ namespace Engine {
 		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(Extnet.width) / static_cast<float>(Extnet.height), 0.1f, 10.f);
+
 
 		ubo.proj[1][1] *= -1;
 

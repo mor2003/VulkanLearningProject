@@ -160,7 +160,7 @@ namespace Engine {
 		vkEnumeratePhysicalDevices(Instance, &devicesCount, devices.data());
 
 		for (const auto& device : devices) {
-			if (SuitableDevice(device)) {
+			if (SuitableDevice(device, devicesCount)) {
 				PhysicalDevice = device;
 			}
 		}
@@ -173,7 +173,9 @@ namespace Engine {
 		std::cout << "Using GPU: " << deviceProperites.deviceName << std::endl;
 	}
 
-	bool Device::SuitableDevice(VkPhysicalDevice device) {
+	bool Device::SuitableDevice(VkPhysicalDevice device, uint32_t devicesCounts) {
+		static uint32_t currentCount = 0;
+
 		QueueFamilyIndices indices = findQueueFamilies(device);
 
 		bool ExtensionsSupport = checkForDeviceExtensions(device);
@@ -184,7 +186,31 @@ namespace Engine {
 			swapChainAdequate = !swapchainSupport.Formats.empty() && !swapchainSupport.presentModes.empty();
 		}
 
-		return indices.isComplete() && ExtensionsSupport;
+		/*
+		In Case you want to use a specific device in your pc (Can be used for easy development) 
+			- Pay attention that if you give wrong character the App won't be able to find the device
+			  and will return an error in Lines: 168 - 172
+
+			- if empty it will choose by default
+		*/
+		const char* YourDevice = "";
+
+		VkPhysicalDeviceProperties devicePropery;
+		vkGetPhysicalDeviceProperties(device, &devicePropery);
+		std::string CurrentDeviceName = devicePropery.deviceName;
+		bool RightDevice = false;
+		if (CurrentDeviceName.find(YourDevice) != std::string::npos) {
+			RightDevice = true;
+		}
+		else {
+			currentCount++;
+		}
+
+		if (currentCount == devicesCounts) {
+			std::cerr << "Error: Device name is inavlid or cannot be found" << std::endl;
+		}
+
+		return indices.isComplete() && ExtensionsSupport && swapChainAdequate && RightDevice;
 	}
 
 	QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) {
