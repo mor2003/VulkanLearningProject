@@ -47,7 +47,7 @@ namespace Engine
 			void Draw(VkCommandBuffer CommandBuffers) { vkCmdDrawIndexed(CommandBuffers, IndexCounts, 1, 0, 0, 0); }
 
 			void updateUniformBuffer(size_t currentImage, VkExtent2D Extent);
-			VkBuffer GetUniformBuffer(size_t currentFrame) { return uniformBuffer[currentFrame]; }
+			VkBuffer GetUniformBuffer(size_t currentFrame) { return UniformBuffers[currentFrame]; }
 
 		private:
 			void createVertexBuffer(const std::vector<Vertex>& vertices);

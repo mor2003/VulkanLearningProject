@@ -74,6 +74,17 @@ namespace Engine
 				VkDeviceMemory& VertexBufferMemory
 			);
 
+			void createImage(
+				VkImage& Image,
+				VkExtent2D TexExtent,
+				VkImageTiling ImageTiling,
+				VkFormat ColorFormat,
+				VkDeviceSize ImageSize,
+				VkImageUsageFlags Usage,
+				VkMemoryPropertyFlags properties,
+				VkDeviceMemory& ImageMemory
+			);
+
 		private:
 			void InitVulk();
 			void setDebugMessenger();

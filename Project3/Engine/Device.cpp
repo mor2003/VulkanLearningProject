@@ -405,4 +405,49 @@ namespace Engine {
 		}
 
 	}
+
+	void Device::createImage(
+		VkImage& Image,
+		VkExtent2D TexExtent,
+		VkImageTiling ImageTiling,
+		VkFormat ColorFormat,
+		VkDeviceSize ImageSize,
+		VkImageUsageFlags Usage,
+		VkMemoryPropertyFlags properties,
+		VkDeviceMemory& ImageMemory
+	) {
+		VkImageCreateInfo ImageInfo{};
+		ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		ImageInfo.extent.width = TexExtent.width;
+		ImageInfo.extent.height = TexExtent.height;
+		ImageInfo.extent.depth = 1;
+		ImageInfo.mipLevels = 1;
+		ImageInfo.arrayLayers = 1;
+
+		ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		ImageInfo.format = ColorFormat;
+		ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+		ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		ImageInfo.usage = Usage;
+		ImageInfo.tiling = ImageTiling;
+
+		if (vkCreateImage(_device, &ImageInfo, nullptr, &Image) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create an Image");
+		}
+
+		VkMemoryRequirements memRequirements;
+		vkGetImageMemoryRequirements(_device, Image, &memRequirements);
+
+		VkMemoryAllocateInfo AllocInfo{};
+		AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		AllocInfo.allocationSize = memRequirements.size;
+		AllocInfo.memoryTypeIndex = findMemType(memRequirements.memoryTypeBits, properties);
+
+		if (vkAllocateMemory(_device, &AllocInfo, nullptr, &ImageMemory) != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate memory to Image");
+		}
+
+		vkBindImageMemory(_device, Image, ImageMemory, 0);
+	}
 }

@@ -40,7 +40,7 @@ namespace Engine
 			GPipeline(const GPipeline&) = delete;
 			GPipeline& operator=(const GPipeline&) = delete;
 
-			static GraphicsPipelineDetails PipelineDefaultDetails(uint32_t width, uint32_t height);
+			static GraphicsPipelineDetails PipelineDefaultDetails();
 
 			void bind(VkCommandBuffer commandBuffer) { vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicsPipeline); }
 

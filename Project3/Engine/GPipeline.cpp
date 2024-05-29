@@ -110,7 +110,9 @@ namespace Engine {
 		}
 	}
 
-	GraphicsPipelineDetails GPipeline::PipelineDefaultDetails(uint32_t width, uint32_t height) {
+
+	//uint32_t width, uint32_t height
+	GraphicsPipelineDetails GPipeline::PipelineDefaultDetails() {
 		GraphicsPipelineDetails pipeline;
 
 		pipeline.InputAssembly = {};
