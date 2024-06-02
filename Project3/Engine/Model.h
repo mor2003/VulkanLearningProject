@@ -53,13 +53,21 @@ namespace Engine
 			void createVertexBuffer(const std::vector<Vertex>& vertices);
 			void createIndexBuffer(const std::vector<uint16_t>& indices);
 			void createUniformBuffers();
+			void createTextureImage();
 
 			void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+			void transitionImageLayout(VkImage Image, VkFormat Format, VkImageLayout oldImageLayout, VkImageLayout newImageLayout);
+			void copyBufferToImage(VkBuffer buffer, VkImage Image, uint32_t width, uint32_t height);
+
+			VkCommandBuffer StartOneTimeCommand();
+			void EndOneTimeCommand(VkCommandBuffer& CommandBuffer);
 
 			VkBuffer VertexBuffer;
 			VkDeviceMemory VertexBufferMemory;
 			VkBuffer IndexBuffer;
 			VkDeviceMemory IndexBufferMemory;
+			VkImage TextureImage;
+			VkDeviceMemory TextureBufferMemory;
 
 			std::vector<VkBuffer> UniformBuffers;
 			std::vector<VkDeviceMemory> UniformBuffersMemory;

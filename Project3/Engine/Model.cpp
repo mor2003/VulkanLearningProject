@@ -1,5 +1,8 @@
 #include "Model.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 namespace Engine {
 	std::array<VkVertexInputAttributeDescription, 2> Model::Vertex::AttributeDescriptions() {
 		std::array<VkVertexInputAttributeDescription, 2> attribDescriptions;
@@ -31,6 +34,7 @@ namespace Engine {
 	}
 
 	Model::Model(Device& dev, const std::vector<Vertex>& vertices, const std::vector<uint16_t>& indices) : device{ dev } {
+		createTextureImage();
 		createVertexBuffer(vertices);
 		createIndexBuffer(indices);
 		createUniformBuffers();
@@ -47,6 +51,9 @@ namespace Engine {
 
 		vkDestroyBuffer(device.device(), VertexBuffer, nullptr);
 		vkFreeMemory(device.device(), VertexBufferMemory, nullptr);
+
+		vkDestroyImage(device.device(), TextureImage, nullptr);
+		vkFreeMemory(device.device(), TextureBufferMemory, nullptr);
 	}
 
 	void Model::createVertexBuffer(const std::vector<Vertex>& vertices) {
@@ -86,24 +93,7 @@ namespace Engine {
 	}
 
 	void Model::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandBufferCount = 1;
-		allocInfo.commandPool = device.CommandPool();
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-		VkCommandBuffer CommandBuffer;
-		if (vkAllocateCommandBuffers(device.device(), &allocInfo, &CommandBuffer) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create command buffer for copying buffers");
-		}
-
-		VkCommandBufferBeginInfo BeginInfo{};
-		BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		if (vkBeginCommandBuffer(CommandBuffer, &BeginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to record command buffer");
-		}
+		auto CommandBuffer = StartOneTimeCommand();
 
 		VkBufferCopy copyRegion{};
 		copyRegion.srcOffset = 0;
@@ -111,17 +101,7 @@ namespace Engine {
 		copyRegion.size = size;
 		vkCmdCopyBuffer(CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-		if (vkEndCommandBuffer(CommandBuffer) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to record command buffer");
-		}
-
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &CommandBuffer;
-
-		vkQueueSubmit(device.GraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(device.GraphicsQueue());
+		EndOneTimeCommand(CommandBuffer);
 	}
 
 	void Model::createIndexBuffer(const std::vector<uint16_t>& indices) {
@@ -194,5 +174,172 @@ namespace Engine {
 		ubo.proj[1][1] *= -1;
 
 		memcpy(UniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+	}
+
+	void Model::createTextureImage() {
+		int Texwidth, TexHeight, TexChannel;
+		stbi_uc* pixels = stbi_load("Res/Textures/statue.jpg", &Texwidth, &TexHeight, &TexChannel, STBI_rgb_alpha);
+
+		VkDeviceSize ImageSize = Texwidth * TexHeight * 4;
+		if (!pixels) {
+			throw std::runtime_error("failed to load the texture pixels");
+		}
+		
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+
+		device.createBuffer(
+			stagingBuffer,
+			ImageSize,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			stagingBufferMemory
+		);
+
+		void* data;
+		vkMapMemory(device.device(), stagingBufferMemory, 0, ImageSize, 0, &data);
+		memcpy(data, pixels, static_cast<size_t>(ImageSize));
+		vkUnmapMemory(device.device(), stagingBufferMemory);
+
+		stbi_image_free(pixels);
+
+		device.createImage(
+			TextureImage,
+			{static_cast<uint32_t>(Texwidth), static_cast<uint32_t>(TexHeight)},
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_R8G8B8A8_SRGB,
+			ImageSize,
+			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			TextureBufferMemory
+			);
+
+		transitionImageLayout(TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		copyBufferToImage(stagingBuffer, TextureImage, static_cast<uint32_t>(Texwidth), static_cast<uint32_t>(TexHeight));
+
+		vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
+		vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
+	}
+
+	VkCommandBuffer Model::StartOneTimeCommand() {
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandBufferCount = 1;
+		allocInfo.commandPool = device.CommandPool();
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		
+		VkCommandBuffer commandBuffer;
+		if (vkAllocateCommandBuffers(device.device(), &allocInfo, &commandBuffer) != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate command buffer");
+		}
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+			throw std::runtime_error("failed to begin recordin the one time command buffer");
+		}
+
+		return commandBuffer;
+	}
+
+	void Model::EndOneTimeCommand(VkCommandBuffer& CommandBuffer) {
+		if (vkEndCommandBuffer(CommandBuffer) != VK_SUCCESS) {
+			throw std::runtime_error("failed to end recordin the one time command buffer");
+		}
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &CommandBuffer;
+
+		vkQueueSubmit(device.GraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+		vkQueueWaitIdle(device.GraphicsQueue());
+
+		vkFreeCommandBuffers(device.device(), device.CommandPool(), 1, &CommandBuffer);
+	}
+
+	void Model::transitionImageLayout(VkImage Image, VkFormat Format, VkImageLayout oldImageLayout, VkImageLayout newImageLayout) {
+		auto CommandBuffer = StartOneTimeCommand();
+
+		VkImageMemoryBarrier barrier{};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = oldImageLayout;
+		barrier.newLayout = newImageLayout;
+
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+		barrier.image = Image;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		VkPipelineStageFlags sourceStage;
+		VkPipelineStageFlags destinationStage;
+
+		if (oldImageLayout == VK_IMAGE_LAYOUT_UNDEFINED && newImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+			sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}	
+		else if (oldImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newImageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else {
+			throw std::invalid_argument("unsupported layout transition");
+		}
+
+		vkCmdPipelineBarrier(
+			CommandBuffer,
+			sourceStage, destinationStage,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &barrier
+		);
+
+		EndOneTimeCommand(CommandBuffer);
+	}
+	
+	void Model::copyBufferToImage(VkBuffer buffer, VkImage Image, uint32_t width, uint32_t height) {
+		auto CommandBuffer = StartOneTimeCommand();
+
+		VkBufferImageCopy region{};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = 0;
+
+		region.imageOffset = { 0,0,0 };
+		region.imageExtent = {
+			width,
+			height,
+			1
+		};
+
+		vkCmdCopyBufferToImage(
+			CommandBuffer,
+			buffer,
+			Image,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region
+		);
+
+		EndOneTimeCommand(CommandBuffer);
 	}
 }

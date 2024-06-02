@@ -193,7 +193,7 @@ namespace Engine {
 
 			- if empty it will choose by default
 		*/
-		const char* YourDevice = "";
+		const char* YourDevice = "Quadro";
 
 		VkPhysicalDeviceProperties devicePropery;
 		vkGetPhysicalDeviceProperties(device, &devicePropery);
