@@ -35,6 +35,7 @@ namespace Engine {
 
 	Model::Model(Device& dev, const std::vector<Vertex>& vertices, const std::vector<uint16_t>& indices) : device{ dev } {
 		createTextureImage();
+		createTextureImageView();
 		createVertexBuffer(vertices);
 		createIndexBuffer(indices);
 		createUniformBuffers();
@@ -51,6 +52,8 @@ namespace Engine {
 
 		vkDestroyBuffer(device.device(), VertexBuffer, nullptr);
 		vkFreeMemory(device.device(), VertexBufferMemory, nullptr);
+
+		vkDestroyImageView(device.device(), TextureImageView, nullptr);
 
 		vkDestroyImage(device.device(), TextureImage, nullptr);
 		vkFreeMemory(device.device(), TextureBufferMemory, nullptr);
@@ -216,6 +219,7 @@ namespace Engine {
 
 		transitionImageLayout(TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		copyBufferToImage(stagingBuffer, TextureImage, static_cast<uint32_t>(Texwidth), static_cast<uint32_t>(TexHeight));
+		transitionImageLayout(TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
 		vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
@@ -290,7 +294,7 @@ namespace Engine {
 		}	
 		else if (oldImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newImageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
@@ -341,5 +345,28 @@ namespace Engine {
 		);
 
 		EndOneTimeCommand(CommandBuffer);
+	}
+
+	void Model::createTextureImageView() {
+		VkImageViewCreateInfo ViewInfo{};
+		ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ViewInfo.image = TextureImage;
+		ViewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		ViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+		ViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		ViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ViewInfo.subresourceRange.baseArrayLayer = 0;
+		ViewInfo.subresourceRange.layerCount = 1;
+		ViewInfo.subresourceRange.baseMipLevel = 0;
+		ViewInfo.subresourceRange.levelCount = 1;
+
+		if (vkCreateImageView(device.device(), &ViewInfo, nullptr, &TextureImageView) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create an image view for texture");
+		}
 	}
 }

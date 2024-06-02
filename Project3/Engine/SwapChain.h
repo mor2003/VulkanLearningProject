@@ -33,9 +33,11 @@ namespace Engine
 			VkResult SubmitCommandBuffer(VkCommandBuffer CommandBuffer, uint32_t* ImageIndex);
 			uint32_t GetImageCount() { return ImageCount; }
 
+			VkImageView createImageView(VkImage Image, VkFormat format);
+
 		private:
 			void createSwapChain();
-			void createImageView();
+			void createSwapchainImageView();
 			void createRenderPass();
 			void createFrameBuffer();
 			void createSyncObject();

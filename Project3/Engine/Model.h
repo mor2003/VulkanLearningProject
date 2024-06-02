@@ -54,6 +54,7 @@ namespace Engine
 			void createIndexBuffer(const std::vector<uint16_t>& indices);
 			void createUniformBuffers();
 			void createTextureImage();
+			void createTextureImageView();
 
 			void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 			void transitionImageLayout(VkImage Image, VkFormat Format, VkImageLayout oldImageLayout, VkImageLayout newImageLayout);
@@ -68,6 +69,8 @@ namespace Engine
 			VkDeviceMemory IndexBufferMemory;
 			VkImage TextureImage;
 			VkDeviceMemory TextureBufferMemory;
+
+			VkImageView TextureImageView;
 
 			std::vector<VkBuffer> UniformBuffers;
 			std::vector<VkDeviceMemory> UniformBuffersMemory;

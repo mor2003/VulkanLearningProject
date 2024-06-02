@@ -3,7 +3,7 @@
 namespace Engine {
 	SwapChain::SwapChain(Device& dev, VkExtent2D windowExtent) : device{ dev }, windowExtent{windowExtent} {
 		createSwapChain();
-		createImageView();
+		createSwapchainImageView();
 		createRenderPass();
 		createFrameBuffer();
 		createSyncObject();
@@ -11,7 +11,7 @@ namespace Engine {
 
 	SwapChain::SwapChain(Device& dev, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous) : device{ dev }, windowExtent{ windowExtent }, oldSwapChain{previous} {
 		createSwapChain();
-		createImageView();
+		createSwapchainImageView();
 		createRenderPass();
 		createFrameBuffer();
 		createSyncObject();
@@ -139,31 +139,11 @@ namespace Engine {
 		std::cout << "Created a swapchain" << std::endl;
 	}
 
-	void SwapChain::createImageView() {
+	void SwapChain::createSwapchainImageView() {
 		swapchainImageViews.resize(swapchainImages.size());
 
-		for (size_t i = 0; i < swapchainImages.size(); i++) {
-			VkImageViewCreateInfo ViewInfo{};
-			ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			ViewInfo.image = swapchainImages[i];
-			ViewInfo.format = swapchainColorFormat;
-			ViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-
-			ViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-			ViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			ViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			ViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-			ViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			ViewInfo.subresourceRange.levelCount = 1;
-			ViewInfo.subresourceRange.baseMipLevel = 0;
-			ViewInfo.subresourceRange.layerCount = 1;
-			ViewInfo.subresourceRange.baseArrayLayer = 0;
-
-			if (vkCreateImageView(device.device(), &ViewInfo, nullptr, &swapchainImageViews[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create an image view");
-			}
-
+		for (size_t i = 0; i < swapchainImageViews.size(); i++) {
+			swapchainImageViews[i] = createImageView(swapchainImages[i], swapchainColorFormat);
 		}
 	}
 
@@ -307,5 +287,31 @@ namespace Engine {
 		currentFrame = (currentFrame + 1) % MAX_FRAME_IN_FLIGHT;
 
 		return vkQueuePresentKHR(device.PresentQueue(), &presentInfo);
+	}
+
+	VkImageView SwapChain::createImageView(VkImage Image, VkFormat format) {
+		VkImageViewCreateInfo ViewInfo{};
+		ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ViewInfo.image = Image;
+		ViewInfo.format = format;
+		ViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+		ViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		ViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ViewInfo.subresourceRange.levelCount = 1;
+		ViewInfo.subresourceRange.baseMipLevel = 0;
+		ViewInfo.subresourceRange.layerCount = 1;
+		ViewInfo.subresourceRange.baseArrayLayer = 0;
+
+		VkImageView ImageView;
+		if (vkCreateImageView(device.device(), &ViewInfo, nullptr, &ImageView) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create an image view");
+		}
+
+		return ImageView;
 	}
 }
