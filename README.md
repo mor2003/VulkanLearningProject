@@ -1,11 +1,4 @@
-### Device Header ###
+# Graphics Programming is cool B) #
 
-responsible for:
-1.  all API communication between the host (CPU) and the device (GPU):
-    a. which device to use
-    b. what queues commands the app will use
-    c. device's logic
-    d. Instances
+![Vulkan](https://github.com/mor2003/VulkanLearningProject/assets/84674603/e209a825-f2e1-479e-9bf8-b09c55675873)
 
-2.  all managing and allocating memory:
-     a. Pools
