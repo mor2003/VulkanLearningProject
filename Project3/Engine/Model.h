@@ -4,6 +4,7 @@
 #include "SwapChain.h"
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -17,10 +18,11 @@ namespace Engine
 	{
 		public:
 			struct Vertex {
-				glm::vec2 position;
+				glm::vec3 position;
 				glm::vec3 color;
+				glm::vec2 texCoord;
 
-				static std::array<VkVertexInputAttributeDescription, 2> AttributeDescriptions();
+				static std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions();
 				static std::array<VkVertexInputBindingDescription, 1> BindingDescriptions();
 			};
 
@@ -49,12 +51,16 @@ namespace Engine
 			void updateUniformBuffer(size_t currentImage, VkExtent2D Extent);
 			VkBuffer GetUniformBuffer(size_t currentFrame) { return UniformBuffers[currentFrame]; }
 
+			VkImageView GetTextureImageView() { return TextureImageView; }
+			VkSampler GetTextureSampler() { return TextureSampler; }
+
 		private:
 			void createVertexBuffer(const std::vector<Vertex>& vertices);
 			void createIndexBuffer(const std::vector<uint16_t>& indices);
 			void createUniformBuffers();
 			void createTextureImage();
 			void createTextureImageView();
+			void createTextureSampler();
 
 			void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 			void transitionImageLayout(VkImage Image, VkFormat Format, VkImageLayout oldImageLayout, VkImageLayout newImageLayout);
@@ -67,10 +73,16 @@ namespace Engine
 			VkDeviceMemory VertexBufferMemory;
 			VkBuffer IndexBuffer;
 			VkDeviceMemory IndexBufferMemory;
+
 			VkImage TextureImage;
 			VkDeviceMemory TextureBufferMemory;
-
 			VkImageView TextureImageView;
+
+			VkImage DepthImage;
+			VkDeviceMemory DepthbufferMemory;
+			VkImageView DepthImageView;
+
+			VkSampler TextureSampler;
 
 			std::vector<VkBuffer> UniformBuffers;
 			std::vector<VkDeviceMemory> UniformBuffersMemory;

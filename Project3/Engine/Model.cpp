@@ -4,13 +4,13 @@
 #include <stb_image.h>
 
 namespace Engine {
-	std::array<VkVertexInputAttributeDescription, 2> Model::Vertex::AttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 2> attribDescriptions;
+	std::array<VkVertexInputAttributeDescription, 3> Model::Vertex::AttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 3> attribDescriptions;
 
 		attribDescriptions[0] = {};
 		attribDescriptions[0].binding = 0;
 		attribDescriptions[0].location = 0;
-		attribDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attribDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attribDescriptions[0].offset = offsetof(Vertex, position);
 
 		attribDescriptions[1] = {};
@@ -18,6 +18,12 @@ namespace Engine {
 		attribDescriptions[1].location = 1;
 		attribDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attribDescriptions[1].offset = offsetof(Vertex, color);
+
+		attribDescriptions[2] = {};
+		attribDescriptions[2].binding = 0;
+		attribDescriptions[2].location = 2;
+		attribDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+		attribDescriptions[2].offset = offsetof(Vertex, texCoord);
 
 		return attribDescriptions;
 	}
@@ -36,6 +42,7 @@ namespace Engine {
 	Model::Model(Device& dev, const std::vector<Vertex>& vertices, const std::vector<uint16_t>& indices) : device{ dev } {
 		createTextureImage();
 		createTextureImageView();
+		createTextureSampler();
 		createVertexBuffer(vertices);
 		createIndexBuffer(indices);
 		createUniformBuffers();
@@ -53,6 +60,7 @@ namespace Engine {
 		vkDestroyBuffer(device.device(), VertexBuffer, nullptr);
 		vkFreeMemory(device.device(), VertexBufferMemory, nullptr);
 
+		vkDestroySampler(device.device(), TextureSampler, nullptr);
 		vkDestroyImageView(device.device(), TextureImageView, nullptr);
 
 		vkDestroyImage(device.device(), TextureImage, nullptr);
@@ -181,7 +189,7 @@ namespace Engine {
 
 	void Model::createTextureImage() {
 		int Texwidth, TexHeight, TexChannel;
-		stbi_uc* pixels = stbi_load("Res/Textures/statue.jpg", &Texwidth, &TexHeight, &TexChannel, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load("Res/Textures/Chungus.jpg", &Texwidth, &TexHeight, &TexChannel, STBI_rgb_alpha);
 
 		VkDeviceSize ImageSize = Texwidth * TexHeight * 4;
 		if (!pixels) {
@@ -367,6 +375,34 @@ namespace Engine {
 
 		if (vkCreateImageView(device.device(), &ViewInfo, nullptr, &TextureImageView) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create an image view for texture");
+		}
+	}
+
+	void Model::createTextureSampler() {
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = device.GetMaxAntisotropy();
+
+		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerInfo.minLod = 0.0;
+		samplerInfo.maxLod = 0.0f;
+		samplerInfo.mipLodBias = 0.0;
+
+		if (vkCreateSampler(device.device(), &samplerInfo, nullptr, &TextureSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler");
 		}
 	}
 }

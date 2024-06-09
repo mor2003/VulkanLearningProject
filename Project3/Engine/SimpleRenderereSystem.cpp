@@ -30,14 +30,21 @@ namespace Engine {
 
 	void SimpleRenderereSystem::LoadModel() {
 		std::vector<Model::Vertex> vertices = {
-			{{0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-			{{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}
+			{{0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+			{{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+			{{-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+
+			{{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+			{{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+			{{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 		};
 
 		std::vector<uint16_t> indices = {
-			0, 1, 2, 2, 3, 0
+			0, 1, 2, 2, 3, 0,
+
+			4, 5, 6, 6, 7, 4
 		};
 
 		model = std::make_unique<Model>(
@@ -49,17 +56,25 @@ namespace Engine {
 
 
 	void SimpleRenderereSystem::createDescriptorSetLayout() {
-		VkDescriptorSetLayoutBinding bindingInfo{};
-		bindingInfo.binding = 0;
-		bindingInfo.descriptorCount = 1;
-		bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		bindingInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		bindingInfo.pImmutableSamplers = nullptr;
+		VkDescriptorSetLayoutBinding uboBindingInfo{};
+		uboBindingInfo.binding = 0;
+		uboBindingInfo.descriptorCount = 1;
+		uboBindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboBindingInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboBindingInfo.pImmutableSamplers = nullptr;
 
+		VkDescriptorSetLayoutBinding imageBindingInfo{};
+		imageBindingInfo.binding = 1;
+		imageBindingInfo.descriptorCount = 1;
+		imageBindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		imageBindingInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		imageBindingInfo.pImmutableSamplers = nullptr;
+
+		std::array<VkDescriptorSetLayoutBinding, 2> bindingInfo{uboBindingInfo, imageBindingInfo};
 		VkDescriptorSetLayoutCreateInfo LayoutInfo{};
 		LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		LayoutInfo.bindingCount = 1;
-		LayoutInfo.pBindings = &bindingInfo;
+		LayoutInfo.bindingCount = static_cast<uint32_t>(bindingInfo.size());
+		LayoutInfo.pBindings = bindingInfo.data();
 
 		if (vkCreateDescriptorSetLayout(device.device(), &LayoutInfo, nullptr, &DescriptorSetLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout");
@@ -86,20 +101,33 @@ namespace Engine {
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(Model::UniformBufferObject);
 
-			VkWriteDescriptorSet WriteSet{};
-			WriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			WriteSet.dstSet = DescriptorSets[i];
-			WriteSet.dstBinding = 0;
-			WriteSet.dstArrayElement = 0;
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.sampler = model->GetTextureSampler();
+			imageInfo.imageView = model->GetTextureImageView();
 
-			WriteSet.descriptorCount = 1;
-			WriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			std::array<VkWriteDescriptorSet, 2> WriteSet{};
+			WriteSet[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			WriteSet[0].dstSet = DescriptorSets[i];
+			WriteSet[0].dstBinding = 0;
+			WriteSet[0].dstArrayElement = 0;
+			WriteSet[0].descriptorCount = 1;
+			WriteSet[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			WriteSet[0].pBufferInfo = &bufferInfo;
+			WriteSet[0].pImageInfo = nullptr;
+			WriteSet[0].pTexelBufferView = nullptr;
 
-			WriteSet.pBufferInfo = &bufferInfo;
-			WriteSet.pImageInfo = nullptr;
-			WriteSet.pTexelBufferView = nullptr;
+			WriteSet[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			WriteSet[1].dstSet = DescriptorSets[i];
+			WriteSet[1].dstBinding = 1;
+			WriteSet[1].dstArrayElement = 0;
+			WriteSet[1].descriptorCount = 1;
+			WriteSet[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			WriteSet[1].pBufferInfo = nullptr;
+			WriteSet[1].pImageInfo = &imageInfo;
+			WriteSet[1].pTexelBufferView = nullptr;
 
-			vkUpdateDescriptorSets(device.device(), 1, &WriteSet, 0, nullptr);
+			vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(WriteSet.size()), WriteSet.data(), 0, nullptr);
 		}
 	}
 

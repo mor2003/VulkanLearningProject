@@ -193,7 +193,7 @@ namespace Engine {
 
 			- if empty it will choose by default
 		*/
-		const char* YourDevice = "";
+		const char* YourDevice = "Quadro";
 
 		VkPhysicalDeviceProperties devicePropery;
 		vkGetPhysicalDeviceProperties(device, &devicePropery);
@@ -261,7 +261,7 @@ namespace Engine {
 		}
 
 		VkPhysicalDeviceFeatures features{};
-
+		features.samplerAnisotropy = VK_TRUE;
 
 		VkDeviceCreateInfo deviceInfo{};
 		deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -390,14 +390,16 @@ namespace Engine {
 	}
 
 	void Device::createDescriptorPool() {
-		VkDescriptorPoolSize PoolSize{};
-		PoolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
-		PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		std::array<VkDescriptorPoolSize, 2> PoolSize{};
+		PoolSize[0].descriptorCount = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
+		PoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		PoolSize[1].descriptorCount = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
+		PoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 		VkDescriptorPoolCreateInfo PoolInfo{};
 		PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		PoolInfo.poolSizeCount = 1;
-		PoolInfo.pPoolSizes = &PoolSize;
+		PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSize.size());
+		PoolInfo.pPoolSizes = PoolSize.data();
 		PoolInfo.maxSets = static_cast<uint32_t>(MAX_FRAME_IN_FLIGHT);
 
 		if (vkCreateDescriptorPool(_device, &PoolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {

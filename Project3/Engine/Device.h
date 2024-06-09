@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <array>
 #include <stdexcept>
 #include <optional>
 #include <set>
@@ -65,6 +66,7 @@ namespace Engine
 
 			VkQueue GraphicsQueue() { return _GraphicsQueue; }
 			VkQueue PresentQueue() { return _PresentQueue; }
+			float GetMaxAntisotropy() { return deviceProperites.limits.maxSamplerAnisotropy; }
 
 			void createBuffer(
 				VkBuffer& VertexBuffer,
