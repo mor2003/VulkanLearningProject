@@ -7,5 +7,5 @@ layout(location = 1) in vec2 texCoords;
 layout(binding = 1) uniform sampler2D texSampler;
 
 void main(){
-	outColors = texture(texSampler, texCoords);
+	outColors = vec4(fragColor, 1.0f);
 }
