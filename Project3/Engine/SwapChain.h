@@ -33,11 +33,12 @@ namespace Engine
 			VkResult SubmitCommandBuffer(VkCommandBuffer CommandBuffer, uint32_t* ImageIndex);
 			uint32_t GetImageCount() { return ImageCount; }
 
-			VkImageView createImageView(VkImage Image, VkFormat format);
+			VkImageView createImageView(VkImage Image, VkFormat format, VkImageAspectFlags aspectFlag);
 
 		private:
 			void createSwapChain();
 			void createSwapchainImageView();
+			void createDepthResources();
 			void createRenderPass();
 			void createFrameBuffer();
 			void createSyncObject();
@@ -52,6 +53,10 @@ namespace Engine
 			std::vector<VkImage> swapchainImages;
 			std::vector<VkImageView> swapchainImageViews;
 			std::vector<VkFramebuffer> framebuffers;
+
+			VkImage DepthImage;
+			VkDeviceMemory DepthImageMemory;
+			VkImageView DepthImageView;
 
 			std::vector<VkSemaphore> imageAvailableSemaphores;
 			std::vector<VkSemaphore> renderFinishedSemaphores;

@@ -193,7 +193,7 @@ namespace Engine {
 
 			- if empty it will choose by default
 		*/
-		const char* YourDevice = "Quadro";
+		const char* YourDevice = "";
 
 		VkPhysicalDeviceProperties devicePropery;
 		vkGetPhysicalDeviceProperties(device, &devicePropery);
@@ -451,5 +451,21 @@ namespace Engine {
 		}
 
 		vkBindImageMemory(_device, Image, ImageMemory, 0);
+	}
+
+	VkFormat Device::findSupportedDepthFormats(const std::vector<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+		for (VkFormat format : candidates) {
+			VkFormatProperties Prop;
+			vkGetPhysicalDeviceFormatProperties(PhysicalDevice, format, &Prop);
+
+			if (tiling == VK_IMAGE_TILING_LINEAR && (Prop.linearTilingFeatures & features) == features) {
+				return format;
+			}
+			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (Prop.optimalTilingFeatures & features) == features) {
+				return format;
+			}
+		}
+
+		throw std::runtime_error("failed to find supported depth format");
 	}
 }

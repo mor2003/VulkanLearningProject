@@ -18,7 +18,6 @@ namespace Engine
 		VkPipelineMultisampleStateCreateInfo MultiSample;
 		VkPipelineColorBlendAttachmentState Attachment;
 		VkPipelineColorBlendStateCreateInfo ColorBlending;
-		VkPipelineDepthStencilStateCreateFlags DepthStencil;
 		VkPipelineLayout layout;
 		VkRenderPass renderPass;
 		uint32_t subpass;

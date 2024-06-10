@@ -69,6 +69,18 @@ namespace Engine {
 		viewState.scissorCount = 1;
 		//viewState.pScissors = &fixedFunctions.scissor;
 
+		VkPipelineDepthStencilStateCreateInfo DepthStencil{};
+		DepthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		DepthStencil.depthWriteEnable = VK_TRUE;
+		DepthStencil.depthTestEnable = VK_TRUE;
+		DepthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		DepthStencil.depthBoundsTestEnable = VK_FALSE;
+		DepthStencil.minDepthBounds = 0.0f;
+		DepthStencil.maxDepthBounds = 1.0f;
+		DepthStencil.stencilTestEnable = VK_FALSE;
+		DepthStencil.front = {};
+		DepthStencil.back = {};
+
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		pipelineInfo.stageCount = 2;
@@ -82,6 +94,7 @@ namespace Engine {
 		pipelineInfo.pRasterizationState = &fixedFunctions.Rasterization;
 		pipelineInfo.pMultisampleState = &fixedFunctions.MultiSample;
 		pipelineInfo.pColorBlendState = &fixedFunctions.ColorBlending;
+		pipelineInfo.pDepthStencilState = &DepthStencil;
 
 		pipelineInfo.layout = fixedFunctions.layout;
 		pipelineInfo.renderPass = fixedFunctions.renderPass;
@@ -162,8 +175,6 @@ namespace Engine {
 		pipeline.ColorBlending.blendConstants[1] = 0.0f;
 		pipeline.ColorBlending.blendConstants[2] = 0.0f;
 		pipeline.ColorBlending.blendConstants[3] = 0.0f;
-
-		pipeline.DepthStencil = {};
 
 		return pipeline;
 	}

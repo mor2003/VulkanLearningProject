@@ -4,6 +4,7 @@ namespace Engine {
 	SwapChain::SwapChain(Device& dev, VkExtent2D windowExtent) : device{ dev }, windowExtent{windowExtent} {
 		createSwapChain();
 		createSwapchainImageView();
+		createDepthResources();
 		createRenderPass();
 		createFrameBuffer();
 		createSyncObject();
@@ -12,6 +13,7 @@ namespace Engine {
 	SwapChain::SwapChain(Device& dev, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous) : device{ dev }, windowExtent{ windowExtent }, oldSwapChain{previous} {
 		createSwapChain();
 		createSwapchainImageView();
+		createDepthResources();
 		createRenderPass();
 		createFrameBuffer();
 		createSyncObject();
@@ -34,6 +36,10 @@ namespace Engine {
 		}
 
 		vkDestroyRenderPass(device.device(), _renderPass, nullptr);
+
+		vkDestroyImageView(device.device(), DepthImageView, nullptr);
+		vkDestroyImage(device.device(), DepthImage, nullptr);
+		vkFreeMemory(device.device(), DepthImageMemory, nullptr);
 
 		for (const auto& imageView : swapchainImageViews) {
 			vkDestroyImageView(device.device(), imageView, nullptr);
@@ -143,43 +149,60 @@ namespace Engine {
 		swapchainImageViews.resize(swapchainImages.size());
 
 		for (size_t i = 0; i < swapchainImageViews.size(); i++) {
-			swapchainImageViews[i] = createImageView(swapchainImages[i], swapchainColorFormat);
+			swapchainImageViews[i] = createImageView(swapchainImages[i], swapchainColorFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 		}
 	}
 
 	void SwapChain::createRenderPass() {
-		VkAttachmentDescription ColorAttachments{};
-		ColorAttachments.samples = VK_SAMPLE_COUNT_1_BIT;
-		ColorAttachments.format = swapchainColorFormat;
-		ColorAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		ColorAttachments.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		ColorAttachments.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		ColorAttachments.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		ColorAttachments.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		ColorAttachments.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		VkAttachmentDescription ColorAttachment{};
+		ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		ColorAttachment.format = swapchainColorFormat;
+		ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentDescription DepthAttachment{};
+		DepthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		DepthAttachment.format = device.findDepthFormat();
+		DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		DepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		DepthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		DepthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		DepthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		DepthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference ColorAttachmentRef{};
 		ColorAttachmentRef.attachment = 0;
 		ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+		VkAttachmentReference DepthAttachmentRef{};
+		DepthAttachmentRef.attachment = 1;
+		DepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 		VkSubpassDescription subpassInfo{};
+		subpassInfo.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpassInfo.colorAttachmentCount = 1;
 		subpassInfo.pColorAttachments = &ColorAttachmentRef;
+		subpassInfo.pDepthStencilAttachment = &DepthAttachmentRef;
 
 		VkSubpassDependency subpassDep{};
 		subpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
 		subpassDep.dstSubpass = 0;
 
-		subpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		subpassDep.srcAccessMask = 0;
 
-		subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
+		std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
 		VkRenderPassCreateInfo PassInfo{};
 		PassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		PassInfo.attachmentCount = 1;
-		PassInfo.pAttachments = &ColorAttachments;
+		PassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
+		PassInfo.pAttachments = Attachments.data();
 		PassInfo.subpassCount = 1;
 		PassInfo.pSubpasses = &subpassInfo;
 		PassInfo.dependencyCount = 1;
@@ -195,14 +218,15 @@ namespace Engine {
 		framebuffers.resize(swapchainImageViews.size());
 
 		for (size_t i = 0; i < swapchainImageViews.size(); i++) {
-			VkImageView attachment[] = {
-				swapchainImageViews[i]
+			std::array<VkImageView, 2> attachments = {
+				swapchainImageViews[i],
+				DepthImageView
 			};
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.attachmentCount = 1;
-			framebufferInfo.pAttachments = attachment;
+			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+			framebufferInfo.pAttachments = attachments.data();
 			framebufferInfo.renderPass = _renderPass;
 			framebufferInfo.layers = 1;
 			framebufferInfo.width = swapchainExtent.width;
@@ -289,7 +313,7 @@ namespace Engine {
 		return vkQueuePresentKHR(device.PresentQueue(), &presentInfo);
 	}
 
-	VkImageView SwapChain::createImageView(VkImage Image, VkFormat format) {
+	VkImageView SwapChain::createImageView(VkImage Image, VkFormat format, VkImageAspectFlags aspectFlag) {
 		VkImageViewCreateInfo ViewInfo{};
 		ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		ViewInfo.image = Image;
@@ -301,7 +325,7 @@ namespace Engine {
 		ViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		ViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ViewInfo.subresourceRange.aspectMask = aspectFlag;
 		ViewInfo.subresourceRange.levelCount = 1;
 		ViewInfo.subresourceRange.baseMipLevel = 0;
 		ViewInfo.subresourceRange.layerCount = 1;
@@ -313,5 +337,22 @@ namespace Engine {
 		}
 
 		return ImageView;
+	}
+
+	void SwapChain::createDepthResources() {
+		VkFormat DepthFormat = device.findDepthFormat();
+
+		device.createImage(
+			DepthImage,
+			swapchainExtent,
+			VK_IMAGE_TILING_OPTIMAL,
+			DepthFormat,
+			0,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			DepthImageMemory
+		);
+
+		DepthImageView = createImageView(DepthImage, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 }

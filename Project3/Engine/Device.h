@@ -87,6 +87,18 @@ namespace Engine
 				VkDeviceMemory& ImageMemory
 			);
 
+			VkFormat findDepthFormat() {
+				return findSupportedDepthFormats(
+					{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+					VK_IMAGE_TILING_OPTIMAL,
+					VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+				);
+			}
+
+			bool isStencilTestSupported(VkFormat format) {
+				return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+			}
+
 		private:
 			void InitVulk();
 			void setDebugMessenger();
@@ -115,6 +127,8 @@ namespace Engine
 			SwapChainSupportDetails findSwapchainDetails(VkPhysicalDevice device);
 
 			uint32_t findMemType(uint32_t TypeFilter, VkMemoryPropertyFlags properties);
+
+			VkFormat findSupportedDepthFormats(const std::vector<VkFormat> candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 			VkInstance Instance;
 			VkDebugUtilsMessengerEXT debugMessenger;
