@@ -4,7 +4,10 @@
 ### Progress in 3D graphics ###
 13.08.2024
 BEEN A WHILE :D
+
 ![image](https://github.com/user-attachments/assets/481b2ca7-99a7-426b-8347-c2f7759206c8)
+
+
 
 
 
