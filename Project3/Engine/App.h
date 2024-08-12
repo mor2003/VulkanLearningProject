@@ -16,7 +16,7 @@ namespace Engine
 	public:
 
 		static constexpr int width = 800;
-		static constexpr int height = 600;
+		static constexpr int height = 800;
 
 		void Run();
 

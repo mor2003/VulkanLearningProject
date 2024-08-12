@@ -31,26 +31,26 @@ namespace Engine {
 	void SimpleRenderereSystem::LoadModel() {
 		std::vector<Model::Vertex> vertices = {
 			/* TOP */
-			{{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},	// 0
-			{{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},		// 1
-			{{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},	// 2
-			{{-0.5f, -0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},	// 3
+			{{-0.5f, 0.4f, 0.5f}, {0.83f, 0.70f, 0.44f}, {0.0f, 0.0f}},	// 0
+			{{-0.5f, 0.4f, -0.5f}, {0.83f, 0.70f, 0.44f}, {5.0f, 0.0f}},		// 1
+			{{0.5f, 0.4f, -0.5f}, {0.83f, 0.70f, 0.44f}, {0.0f, 0.0f}},	// 2
+			{{0.5f, 0.4f, 0.5f}, {0.83f, 0.70f, 0.44f}, {5.0f, 0.0f}},	// 3
 
 			/* Bottom */
-			{{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},	// 4
+			{{0.0f, -0.4f, 0.0f}, {0.92f, 0.86f, 0.76f}, {2.5f, 5.0f}},	// 4
+
 			{{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},	// 5
 			{{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},	// 6
 			{{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},// 7
 		};
 
 		std::vector<uint16_t> indices = {
-			0, 1, 2, 2, 3, 0,
-			0, 4, 5, 5, 1, 0,
-			1, 5, 6, 6, 2, 1,
-			2, 6, 7, 7, 3, 2,
-			3, 7, 4, 4, 0, 3,
-
-			4, 7, 6, 6, 5, 4
+			2, 1, 0,
+			3, 2, 0,
+			0, 1, 4,
+			1, 2, 4,
+			2, 3, 4,
+			3, 0, 4
 		};
 
 		model = std::make_unique<Model>(
@@ -159,8 +159,8 @@ namespace Engine {
 
 		pipeline = std::make_unique<GPipeline>(
 			device,
-			"Res/Shaders/Triangle.vert.spv",
-			"Res/Shaders/Triangle.frag.spv",
+			"D:/Coding/YTVulkan/VulkanLearn/VulkanLearningProject/Project3/Res/Shaders/Triangle.vert.spv",
+			"D:/Coding/YTVulkan/VulkanLearn/VulkanLearningProject/Project3/Res/Shaders/Triangle.frag.spv",
 			fixedFunctions
 		);
 	}

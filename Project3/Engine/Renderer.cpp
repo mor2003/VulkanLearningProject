@@ -123,7 +123,7 @@ namespace Engine {
 		RPbeginInfo.renderArea.extent = swapchain->Extent();
 
 		std::array<VkClearValue, 2> clearValues;
-		clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+		clearValues[0].color = { {0.07f, 0.13f, 0.17f, 1.0f} };
 		clearValues[1].depthStencil = { 1.0f, 0 };
 		RPbeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		RPbeginInfo.pClearValues = clearValues.data();

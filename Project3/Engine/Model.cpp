@@ -177,9 +177,10 @@ namespace Engine {
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 		UniformBufferObject ubo{};
-		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.8f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(Extent.width) / static_cast<float>(Extent.height), 0.1f, 10.f);
+
 
 
 		ubo.proj[1][1] *= -1;
@@ -189,7 +190,7 @@ namespace Engine {
 
 	void Model::createTextureImage() {
 		int Texwidth, TexHeight, TexChannel;
-		stbi_uc* pixels = stbi_load("Res/Textures/Chungus.jpg", &Texwidth, &TexHeight, &TexChannel, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load("D:/Coding/YTVulkan/VulkanLearn/VulkanLearningProject/Project3/Res/Textures/brick.png", &Texwidth, &TexHeight, &TexChannel, STBI_rgb_alpha);
 
 		VkDeviceSize ImageSize = Texwidth * TexHeight * 4;
 		if (!pixels) {
@@ -383,9 +384,9 @@ namespace Engine {
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		samplerInfo.magFilter = VK_FILTER_LINEAR;
 		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
 		samplerInfo.anisotropyEnable = VK_TRUE;
 		samplerInfo.maxAnisotropy = device.GetMaxAntisotropy();
