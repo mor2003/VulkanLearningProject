@@ -2,6 +2,7 @@
 
 #include "Window.h"
 #include "Device.h"
+#include "Camera.h"
 
 #include "Renderer.h"
 #include "SimpleRenderereSystem.h"

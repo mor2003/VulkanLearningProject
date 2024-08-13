@@ -10,6 +10,8 @@ namespace Engine
 		Window(int w, int h);
 		~Window();
 
+		GLFWwindow* WindowHandler() { return window; }
+
 		Window(const Window&) = delete;
 		Window& operator=(const Window&) = delete;
 

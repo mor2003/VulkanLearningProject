@@ -3,7 +3,8 @@
 namespace Engine
 {
 	void App::Run() {
-		SimpleRenderereSystem simpleRenderSystem{ device, renderer.GetSwapchainRenderPass() };
+		Camera camera{ device, static_cast<int>(renderer.GetSwapchainExtent().width), static_cast<int>(renderer.GetSwapchainExtent().height), glm::vec3(0.0f, 0.0f, 2.0f) };
+		SimpleRenderereSystem simpleRenderSystem{ device, renderer.GetSwapchainRenderPass(), camera};
 
 		while (!window.ShouldClose()) {
 			glfwPollEvents();
@@ -12,7 +13,8 @@ namespace Engine
 				renderer.StartSwapchainRenderPass(commandBuffer);
 				simpleRenderSystem.RenderObject(commandBuffer, currentFrame);
 				renderer.EndSwapchainRenderPass(commandBuffer);
-				simpleRenderSystem.UniformUpdates(currentFrame, renderer.GetSwapchainExtent());
+				camera.Inputs(window.WindowHandler());
+				camera.Matrix(currentFrame);
 				renderer.EndFrame();
 			}
 

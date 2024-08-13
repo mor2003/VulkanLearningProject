@@ -3,13 +3,14 @@
 #include "Device.h"
 #include "GPipeline.h"
 #include "Model.h"
+#include "Camera.h"
 
 namespace Engine
 {
 	class SimpleRenderereSystem
 	{
 	public:
-		SimpleRenderereSystem(Device& device, VkRenderPass renderPass);
+		SimpleRenderereSystem(Device& device, VkRenderPass renderPass, Camera& Camera);
 		~SimpleRenderereSystem();
 
 		void RenderObject(VkCommandBuffer commandBuffer, uint32_t currentFrame);
@@ -19,7 +20,7 @@ namespace Engine
 	private:
 		void LoadModel();
 		void createDescriptorSetLayout();
-		void createDescriptorSets();
+		void createDescriptorSets(Camera& Camera);
 		void createPipelineLayout();
 		void createGraphicsPipeline(VkRenderPass renderPass);
 

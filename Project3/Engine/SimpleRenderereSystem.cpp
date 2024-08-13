@@ -1,10 +1,10 @@
 #include "SimpleRenderereSystem.h"
 
 namespace Engine {
-	SimpleRenderereSystem::SimpleRenderereSystem(Device& device, VkRenderPass renderPass) : device{device} {
+	SimpleRenderereSystem::SimpleRenderereSystem(Device& device, VkRenderPass renderPass, Camera& Camera) : device{device} {
 		LoadModel();
 		createDescriptorSetLayout();
-		createDescriptorSets();
+		createDescriptorSets(Camera);
 		createPipelineLayout();
 		createGraphicsPipeline(renderPass);
 	}
@@ -88,7 +88,7 @@ namespace Engine {
 	}
 
 
-	void SimpleRenderereSystem::createDescriptorSets() {
+	void SimpleRenderereSystem::createDescriptorSets(Camera& Camera) {
 		std::vector<VkDescriptorSetLayout> layouts(MAX_FRAME_IN_FLIGHT, DescriptorSetLayout);
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -103,9 +103,9 @@ namespace Engine {
 
 		for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
 			VkDescriptorBufferInfo bufferInfo{};
-			bufferInfo.buffer = model->GetUniformBuffer(i);
+			bufferInfo.buffer = Camera.GetCameraBuffer(i);
 			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(Model::UniformBufferObject);
+			bufferInfo.range = sizeof(Camera::CameraUBO);
 
 			VkDescriptorImageInfo imageInfo{};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
