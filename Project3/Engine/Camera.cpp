@@ -51,6 +51,42 @@ namespace Engine {
 		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
 			Position += Speed * -Up;
 		}
+
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+			cursorOn = true;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			firstClick = true;
+			cursorOn = false;
+		}
+
+		if (cursorOn) {
+			if (firstClick) {
+				glfwSetCursorPos(window, (width / 2), (height / 2));
+				firstClick = false;
+			}
+
+			double MouseX;
+			double MouseY;
+			glfwGetCursorPos(window, &MouseX, &MouseY);
+
+			float RotX = sensitivity * static_cast<float>(MouseY - (height / 2)) / height;
+			float RotY = sensitivity * static_cast<float>(MouseX - (height / 2)) / height;
+
+			glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-RotX), glm::normalize(glm::cross(Orientation, Up)));
+
+			if (!(glm::angle(newOrientation, Up) <= glm::radians(5.0f) or glm::angle(newOrientation, -Up) <= glm::radians(5.0f))) {
+				Orientation = newOrientation;
+			}
+
+			Orientation = glm::rotate(Orientation, glm::radians(-RotY), Up);
+
+			glfwSetCursorPos(window, (width / 2), (height / 2));
+		}
+
 	}
 
 	void Camera::createUniformBuffers()
